@@ -8,8 +8,8 @@ screen = pygame.display.set_mode(size)
 STEP = 50
 cols = 10
 rows = 10
-wr = WIDTH/cols
-hr = HEIGHT/rows
+wr = WIDTH / cols
+hr = HEIGHT / rows
 
 
 def load_image(name, color_key=None):
@@ -80,37 +80,50 @@ class Player(pygame.sprite.Sprite):
         x0, y0 = int(player_rect.left / wr), int(player_rect.top / hr)
         x1, y1 = int(player_rect.right / wr), int(player_rect.bottom / hr)
 
-        if player.left_pressed and player_rect.x < x_ * wr + 2:
-            if tile_images[x_][y0].walls[3] or tile_images[x_][y1].walls[3]:
-                player.x = x_ * wr + 2
-                player.left_pressed = False
-            if player.y != y_ * hr + 2 and tile_images[x0][y0].walls[2]:
-                player.x = x_ * wr + 2
-                player.left_pressed = False
+    def collide(self, x, y):
+        self.rect.x += x
+        self.rect.y += y
+        if pygame.sprite.spritecollideany(self, wall_group):
+            self.rect.x -= x
+            self.rect.y -= y
+            return False
+        print('ok')
+        self.rect.x -= x
+        self.rect.y -= y
+        return True
 
-        if player.right_pressed and player_rect.x > x_ * wr + 2:
-            if tile_images[x_][y0].walls[1] or tile_images[x_][y1].walls[1]:
-                player.x = x_ * wr + 2
-                player.right_pressed = False
-            if player.y != y_ * hr + 2 and tile_images[x0 + 1][y0].walls[2]:
-                player.x = x_ * wr + 2
-                player.right_pressed = False
+    def move(self):
+        if self.left_pressed and self.player_rect.x < self.x_ * wr + 2:
+            if tile_images[self.x_][self.y0].walls[3] or tile_images[self.x_][self.y1].walls[3]:
+                player.x = self.x_ * wr + 2
+                self.left_pressed = False
+            if self.y != self.y_ * hr + 2 and tile_images[self.x0][self.y0].walls[2]:
+                self.x = self.x_ * wr + 2
+                self.left_pressed = False
 
-        if player.up_pressed and player_rect.y < y_ * hr + 2:
-            if tile_images[x0][y_].walls[0] or tile_images[x1][y_].walls[0]:
-                player.y = y_ * hr + 2
-                player.up_pressed = False
-            if player.x != x_ * wr + 2 and tile_images[x0][y0].walls[3]:
-                player.y = y_ * hr + 2
-                player.up_pressed = False
+        if self.right_pressed and self.player_rect.x > self.x_ * wr + 2:
+            if tile_images[self.x_][self.y0].walls[1] or tile_images[self.x_][self.y1].walls[1]:
+                self.x = self.x_ * wr + 2
+                self.right_pressed = False
+            if self.y != self.y_ * hr + 2 and tile_images[self.x0 + 1][self.y0].walls[2]:
+                self.x = self.x_ * wr + 2
+                self.right_pressed = False
 
-        if player.down_pressed and player_rect.y > y_ * hr + 2:
-            if tile_images[x0][y_].walls[2] or tile_images[x1][y_].walls[2]:
-                player.y = y_ * hr + 2
-                player.down_pressed = False
-            if player.x != x_ * wr + 2 and tile_images[x0][y0 + 1].walls[3]:
-                player.y = y_ * hr + 2
-                player.down_pressed = False
+        if self.up_pressed and self.player_rect.y < self.y_ * hr + 2:
+            if tile_images[self.x0][self.y_].walls[0] or tile_images[self.x1][self.y_].walls[0]:
+                self.y = self.y_ * hr + 2
+                self.up_pressed = False
+            if self.x != self.x_ * wr + 2 and tile_images[self.x0][self.y0].walls[3]:
+                self.y = self.y_ * hr + 2
+                self.up_pressed = False
+
+        if self.down_pressed and self.player_rect.y > self.y_ * hr + 2:
+            if tile_images[self.x0][self.y_].walls[2] or tile_images[self.x1][self.y_].walls[2]:
+                self.y = self.y_ * hr + 2
+                self.down_pressed = False
+            if self.x != self.x_ * wr + 2 and tile_images[self.x0][self.y0 + 1].walls[3]:
+                self.y = self.y_ * hr + 2
+                self.down_pressed = False
 
 
 player = None
@@ -119,6 +132,7 @@ player = None
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+wall_group = pygame.sprite.Group()
 
 
 def generate_level(level):
@@ -128,7 +142,7 @@ def generate_level(level):
             if level[y][x] == '.':
                 Tile('empty', x, y)
             elif level[y][x] == '#':
-                Tile('wall', x, y)
+                Tile('wall', x, y).add(wall_group)
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
@@ -182,6 +196,7 @@ class Camera:
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
+
 start_screen()
 running = True
 player, level_x, level_y = generate_level(load_level('levelex.txt'))
@@ -193,16 +208,20 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 player.up_pressed = True
-                player.rect.y -= STEP
+                if player.collide(0, -STEP):
+                    player.rect.y -= STEP
             if event.key == pygame.K_DOWN:
                 player.down_pressed = True
-                player.rect.y += STEP
+                if player.collide(0, STEP):
+                    player.rect.y += STEP
             if event.key == pygame.K_LEFT:
                 player.left_pressed = True
-                player.rect.x -= STEP
+                if player.collide(0, STEP):
+                    player.rect.x -= STEP
             if event.key == pygame.K_RIGHT:
                 player.right_pressed = True
-                player.rect.x += STEP
+                if player.collide(0, STEP):
+                    23player.rect.x += STEP
 
     camera.update(player)
     # обновляем положение всех спрайтов
