@@ -152,9 +152,14 @@ def generate_level(level):
 
 def start_screen():
     intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+                  "Цель игры состоит в том, чтобы провести персонажа по",
+                  "игровому миру, который представлен сеткой из плиток.",
+                  "Игрок может перемещать персонажа, используя клавиши",
+                  'со стрелками',
+                  'Игра включает в себя различные препятствия',
+                  'врагов, которые игрок должен преодолеть',
+                  "Игрок может собирать предметы или бонусы,"
+                  "которые могут помочь ему в путешествии."]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
@@ -173,8 +178,7 @@ def start_screen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 return  # начинаем игру
         pygame.display.flip()
         clock.tick(FPS)
@@ -216,12 +220,12 @@ while running:
                     player.rect.y += STEP
             if event.key == pygame.K_LEFT:
                 player.left_pressed = True
-                if player.collide(0, STEP):
+                if player.collide(-STEP, 0):
                     player.rect.x -= STEP
             if event.key == pygame.K_RIGHT:
                 player.right_pressed = True
-                if player.collide(0, STEP):
-                    23player.rect.x += STEP
+                if player.collide(STEP, 0):
+                    player.rect.x += STEP
 
     camera.update(player)
     # обновляем положение всех спрайтов
